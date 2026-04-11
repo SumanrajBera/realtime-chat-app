@@ -16,7 +16,7 @@ authRouter.post("/register", async (req, res) => {
     try {
         let { username, email, password } = req.body
 
-        const userExist = await userModel.find({
+        const userExist = await userModel.findOne({
             $or: [
                 { username }, { email }
             ]
@@ -24,7 +24,7 @@ authRouter.post("/register", async (req, res) => {
 
         if (userExist) {
             return res.status(409).json({
-                message: "User with such email or password already exist"
+                message: "User with such email or username already exist"
             })
         }
 
@@ -34,7 +34,7 @@ authRouter.post("/register", async (req, res) => {
             password
         })
 
-        res.status(200).json({
+        res.status(201).json({
             message: "User registered successfully",
             user
         })
