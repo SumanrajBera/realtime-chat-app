@@ -16,8 +16,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         select: false
+    },
+    isVerified: {
+        type: Boolean,
+        required: true,
+        default: false
     }
-})
+}, { timestamps: true })
 
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) return
