@@ -153,9 +153,55 @@ authRouter.get("/verify-email", async (req, res) => {
         })
     } catch (err) {
         console.error("Error while verifying email", err);
-        if (err.name === "JsonTokenError") return res.status(400).json({
+        if (err.name === "JsonWebTokenError") return res.status(400).json({
             message: "Token invalid or expired"
         })
+        return res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+})
+
+/**
+ * @route /api/auth/resend-email
+ * @method POST
+ * @description For resending email
+ */
+authRouter.post("/resend-email", async (req, res) => {
+    try {
+        const { email } = req.body
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" })
+        }
+
+        const user = await userModel.findOne({ email })
+
+        if (!user) {
+            return res.status(400).json({
+                message: "User was either deleted or doesn't exist"
+            })
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                message: "User is already verified. Please Login!"
+            })
+        }
+
+        try {
+            await sendEmail(user)
+            return res.status(200).json({
+                message: "Email sent successfully."
+            })
+        } catch (err) {
+            console.error("Email sending failed:", err)
+            return res.status(500).json({
+                message: "Please retry after some time."
+            })
+        }
+    } catch (err) {
+        console.error("Error while resending email", err);
         return res.status(500).json({
             message: "Internal Server Error"
         })
