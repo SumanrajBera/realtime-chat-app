@@ -107,7 +107,6 @@ authRouter.post("/login", async (req, res) => {
         }
 
         sendToken(user, "Login successfully", 200, res)
-
     } catch (err) {
         console.error("Login error", err)
         return res.status(500).json({
@@ -169,16 +168,21 @@ authRouter.get("/verify-email", async (req, res) => {
  */
 authRouter.post("/resend-email", async (req, res) => {
     try {
-        const { email } = req.body
+        const { identifier } = req.body
 
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" })
+        if (!identifier) {
+            return res.status(400).json({ message: "Identifier not specified" })
         }
 
-        const user = await userModel.findOne({ email })
+        const user = await userModel.findOne({
+            $or: [
+                { email: identifier },
+                { username: identifier }
+            ]
+        })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(404).json({
                 message: "User was either deleted or doesn't exist"
             })
         }
@@ -189,17 +193,11 @@ authRouter.post("/resend-email", async (req, res) => {
             })
         }
 
-        try {
-            await sendEmail(user)
-            return res.status(200).json({
-                message: "Email sent successfully."
-            })
-        } catch (err) {
-            console.error("Email sending failed:", err)
-            return res.status(500).json({
-                message: "Please retry after some time."
-            })
-        }
+
+        await sendEmail(user)
+        return res.status(200).json({
+            message: "Email sent successfully."
+        })
     } catch (err) {
         console.error("Error while resending email", err);
         return res.status(500).json({
